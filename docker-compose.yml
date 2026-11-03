@@ -1,0 +1,55 @@
+services:
+  php-app:
+    build: .
+    container_name: php_app
+    ports:
+      - "${APP_PORT}:80"
+    env_file: .env
+    volumes:
+      - .:/var/www/html # Monta toda la raíz del proyecto, incluido src, vendor, etc.
+    depends_on:
+      - postgres-db
+    environment:
+      DATABASE_HOST: postgres-db
+      DATABASE_USER: ${POSTGRES_USER}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+      DATABASE_NAME: ${POSTGRES_DB}
+      APACHE_DOCUMENT_ROOT: /var/www/html/src # Así Apache busca index.php en src/
+    networks:
+      - tienda-network
+
+  postgres-db:
+    image: postgres:12-alpine
+    container_name: postgres_db
+    env_file: .env
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - db_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    networks:
+      - tienda-network
+
+  adminer:
+    image: adminer
+    container_name: adminer
+    env_file: .env
+    ports:
+      - "8081:8080"
+    depends_on:
+      - postgres-db
+    networks:
+      - tienda-network
+
+volumes:
+  db_data:
+  uploads:
+
+
+networks:
+  tienda-network:
+    driver: bridge
