@@ -1,7 +1,5 @@
 <?php
 
-// Conexión prueba temporal
-
 namespace config; // Coincide con la carpeta src/config/ (autoload PSR-4)
 
 
@@ -12,21 +10,21 @@ use PDO;           // Clase de PHP para conectar con la base de datos
 // Singleton: solo existe un objeto Config en toda la aplicación
 class Config
 {
-    private static $instance; // Guarda la única instancia
-    private $postgresDb;
-    private $postgresUser;
-    private $postgresPassword;
-    private $postgresHost;
-    private $postgresPort;
-    private $db;              // Aquí se guarda la conexión PDO
+    private static ?Config $instance; // Guarda la única instancia (Config o null)
+    private string $postgresDb;
+    private string $postgresUser;
+    private string $postgresPassword;
+    private string $postgresHost;
+    private string $postgresPort;
+    private PDO $db;                  // Aquí se guarda la conexión PDO
 
     // CAMBIO: antes '/var/www/html/public/'. Aquí está mi .env (raíz del proyecto, sin public/)
-    private $rootPath = '/var/www/html/';
+    private string $rootPath = '/var/www/html/';
 
     // CAMBIO: antes '/var/www/html/public/uploads/'. Mis imágenes van en src/uploads/
-    private $uploadPath = '/var/www/html/src/uploads/';
+    private string $uploadPath = '/var/www/html/src/uploads/';
 
-    private $uploadUrl = 'http://localhost:8080/uploads/'; // URL pública de las imágenes
+    private string $uploadUrl = 'http://localhost:8080/uploads/'; // URL pública de las imágenes
 
     // Constructor privado: impide hacer new Config() desde fuera
     private function __construct()
@@ -43,7 +41,7 @@ class Config
         $this->postgresHost = getenv('POSTGRES_HOST') ?? 'localhost';
         $this->postgresPort = getenv('POSTGRES_PORT') ?? '5432';
 
-        // Abre la conexión con PostgreSQL
+        // Abre la conexión con PostgreSQL (la cadena "pgsql:..." es el DSN)
         $this->db = new PDO("pgsql:host={$this->postgresHost};port={$this->postgresPort};dbname={$this->postgresDb}", $this->postgresUser, $this->postgresPassword);
     }
 
@@ -59,13 +57,13 @@ class Config
 
     // Magic methos for get and set
     // __get permite leer propiedades privadas: $config->db
-    public function __get($name)
+    public function __get(string $name): mixed
     {
         return $this->$name;
     }
 
     // __set permite modificar propiedades privadas: $config->uploadUrl = '...'
-    public function __set($name, $value)
+    public function __set(string $name, mixed $value): void
     {
         $this->$name = $value;
     }
