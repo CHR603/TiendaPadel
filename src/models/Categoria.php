@@ -10,6 +10,7 @@ use Ramsey\Uuid\Uuid;
 class Categoria
 {
     // Una propiedad por cada columna de la tabla. Son privadas: no se tocan directamente desde fuera
+    // Todos llevan ? porque el constructor permite crear un producto vacío (null).
     private ?string $id;
     private ?string $nombre;
     private ?string $createdAt;
