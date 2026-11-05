@@ -1,30 +1,33 @@
 <?php
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use models\User;
+use config\Config;
+use services\SessionService;
+use services\UsersService;
+
+// IMPORTANTE: antes de cualquier echo
+$session = SessionService::getInstance();
 
 try {
-    // Usuario con dos roles
-    $u = new User(1, 'admin', 'hash-de-prueba', 'Admin', 'Admin Admin', 'admin@prueba.net',
-        '2026-11-04', '2026-11-04', false, ['USER', 'ADMIN']);
+    $accion = $_GET['accion'] ?? '';
 
-    echo "Usuario: " . $u->username . "<br>";
-    echo "Email: " . $u->email . "<br>";
-    echo "Roles: " . implode(', ', $u->roles) . "<br>";
-    echo "¿Es admin? " . (in_array('ADMIN', $u->roles) ? 'Sí' : 'No') . "<br><br>";
+    if ($accion === 'login') {
+        // Autentica con UsersService y guarda el resultado en la sesión
+        $user = (new UsersService(Config::getInstance()->db))->authenticate('admin', 'Admin1');
+        $session->login($user);
+    } elseif ($accion === 'logout') {
+        $session->logout();
+    }
 
-    // Usuario sin roles: debe quedar con un array vacío
-    $v = new User(2, 'user');
-    echo "Roles de user: " . count($v->roles) . "<br><br>";
+    echo "Usuario: " . $session->getUsername() . "<br>";
+    echo "¿Ha iniciado sesión? " . ($session->isLoggedIn() ? 'Sí' : 'No') . "<br>";
+    echo "¿Es admin? " . ($session->isAdmin() ? 'Sí' : 'No') . "<br>";
+    echo "Último login: " . ($session->getLastLogin() ?? 'ninguno') . "<br>";
+    echo "Visitas: " . $session->getVisitas() . "<br><br>";
 
-    // Modificar una propiedad (usa __set)
-    $v->email = 'user@prueba.net';
-    echo "Email nuevo: " . $v->email . "<br><br>";
-
-    // Comprobar el hash real de 'admin' que está en el init.sql
-    $hash = '$2y$10$6wgbcN4nV7YB1zTGeCwZL.uLkxaqX.zSFT2J.BRIwPOoBPFQRq2a2';
-    echo "Admin1 correcta: " . (password_verify('Admin1', $hash) ? 'Sí' : 'No') . "<br>";
-    echo "Otra contraseña: " . (password_verify('mala', $hash) ? 'Sí' : 'No');
+    echo '<a href="?accion=login">Login</a> | <a href="?accion=logout">Logout</a> | <a href="/">Recargar</a>';
 } catch (Throwable $e) {
     echo "Error: " . $e->getMessage();
 }
+
+?>
