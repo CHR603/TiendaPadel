@@ -5,29 +5,34 @@ use config\Config;
 use services\SessionService;
 use services\UsersService;
 
-// IMPORTANTE: antes de cualquier echo
 $session = SessionService::getInstance();
+$accion = $_GET['accion'] ?? '';
+$error = '';
 
+// Esto va ANTES de header.php: después de escribir HTML ya no se puede cambiar la sesión
 try {
-    $accion = $_GET['accion'] ?? '';
-
-    if ($accion === 'login') {
-        // Autentica con UsersService y guarda el resultado en la sesión
-        $user = (new UsersService(Config::getInstance()->db))->authenticate('admin', 'Admin1');
-        $session->login($user);
+    $usuarios = new UsersService(Config::getInstance()->db);
+    if ($accion === 'login-admin') {
+        $session->login($usuarios->authenticate('admin', 'Admin1'));
+    } elseif ($accion === 'login-user') {
+        $session->login($usuarios->authenticate('user', 'User1234'));
     } elseif ($accion === 'logout') {
         $session->logout();
     }
-
-    echo "Usuario: " . $session->getUsername() . "<br>";
-    echo "¿Ha iniciado sesión? " . ($session->isLoggedIn() ? 'Sí' : 'No') . "<br>";
-    echo "¿Es admin? " . ($session->isAdmin() ? 'Sí' : 'No') . "<br>";
-    echo "Último login: " . ($session->getLastLogin() ?? 'ninguno') . "<br>";
-    echo "Visitas: " . $session->getVisitas() . "<br><br>";
-
-    echo '<a href="?accion=login">Login</a> | <a href="?accion=logout">Logout</a> | <a href="/">Recargar</a>';
 } catch (Throwable $e) {
-    echo "Error: " . $e->getMessage();
+    $error = $e->getMessage();
 }
+
+include_once __DIR__ . '/header.php';
+
+echo '<h1>Prueba de header y footer</h1>';
+if ($error !== '') {
+    echo '<div class="alert alert-danger">' . htmlspecialchars($error) . '</div>';
+}
+echo '<p><a href="?accion=login-admin">Entrar como admin</a> | ';
+echo '<a href="?accion=login-user">Entrar como user</a> | ';
+echo '<a href="?accion=logout">Salir</a></p>';
+
+include_once __DIR__ . '/footer.php';
 
 ?>
