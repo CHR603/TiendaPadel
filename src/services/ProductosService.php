@@ -112,6 +112,7 @@ class ProductosService
 
 
 
+    
         // INSERTAR: guarda un producto nuevo en la base de datos.
     // Devuelve true si se ha guardado y lanza una excepción si la base de datos da error
     public function save(Producto $producto): bool
@@ -144,7 +145,69 @@ class ProductosService
         return $stmt->execute();
     }
 
-    // Pendiente: update() y deleteById() en la fase 3
+
+
+
+
+
+        // ACTUALIZAR: modifica un producto que ya existe. Se identifica por su id.
+    // Cambia los campos editables y la fecha de modificación (updated_at).
+    // Devuelve true si la consulta se ha ejecutado bien
+    public function update(Producto $producto): bool
+    {
+        // Si el producto no tiene imagen, usa la imagen por defecto (igual que en save)
+        $imagen = $producto->imagen ?: Producto::$IMAGEN_DEFAULT;
+
+        // UPDATE cambia las columnas indicadas en las filas que cumplan el WHERE.
+        // IMPORTANTE: WHERE id = :id hace que solo se modifique ESTE producto.
+        //   Sin WHERE se modificarían TODOS los productos de la tabla.
+        // No se tocan id, uuid ni created_at: identifican al producto y no cambian.
+        // updated_at = CURRENT_TIMESTAMP guarda la fecha y hora actuales
+        $stmt = $this->pdo->prepare(
+            "UPDATE productos
+             SET marca = :marca, modelo = :modelo, descripcion = :descripcion, precio = :precio,
+                 stock = :stock, imagen = :imagen, categoria_id = :categoria_id,
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE id = :id"
+        );
+
+        // bindValue asigna el valor a cada marcador y le dice de qué tipo es.
+        // Se usa bindValue y no bindParam porque los valores salen de $producto->..., que no son variables
+        $stmt->bindValue(':marca', $producto->marca, PDO::PARAM_STR);
+        $stmt->bindValue(':modelo', $producto->modelo, PDO::PARAM_STR);
+        $stmt->bindValue(':descripcion', $producto->descripcion, PDO::PARAM_STR);
+        $stmt->bindValue(':precio', $producto->precio, PDO::PARAM_STR); // PDO no tiene tipo decimal: va como texto
+        $stmt->bindValue(':stock', $producto->stock, PDO::PARAM_INT);
+        $stmt->bindValue(':imagen', $imagen, PDO::PARAM_STR);
+        $stmt->bindValue(':categoria_id', $producto->categoriaId, PDO::PARAM_STR); // Es un uuid, es decir, texto
+        $stmt->bindValue(':id', $producto->id, PDO::PARAM_INT);                    // El id es un número entero
+
+        // execute() lanza el UPDATE y devuelve true si ha ido bien
+        return $stmt->execute();
+    }
+
+
+
+
+
+
+
+    // BORRAR: elimina físicamente el producto con ese id (la fila desaparece de la tabla).
+    // Devuelve true si la consulta se ha ejecutado bien
+    public function deleteById(int $id): bool
+    {
+        // Igual que en update: sin WHERE se borrarían TODOS los productos
+        $stmt = $this->pdo->prepare("DELETE FROM productos WHERE id = :id");
+
+        // Aquí sí se puede usar bindParam, porque $id es una variable
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+
+        // execute() lanza el DELETE y devuelve true si ha ido bien
+        return $stmt->execute();
+    }
+
+
+
 
 
     

@@ -104,7 +104,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $aviso === '') {
             // Producto nuevo: sin id, uuid ni imagen, porque save() los asigna.
             // El orden de los argumentos es el del constructor del modelo Producto
             $producto = new Producto(null, null, $descripcion, null, $marca, $modelo, $precioNum, $stockNum, null, null, $categoriaId);
-            (new ProductosService($config->db))->save($producto);
+                        // Config es Singleton: getInstance() devuelve siempre el mismo objeto (la misma conexión)
+            (new ProductosService(Config::getInstance()->db))->save($producto);
 
             $mensaje = '<div class="alert alert-success">Producto creado correctamente.</div>';
             // Vacía el formulario para poder crear otro producto
