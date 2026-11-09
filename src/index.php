@@ -11,6 +11,13 @@ use services\SessionService;
 // La sesión debe ir antes de cualquier HTML: header.php escribe la página
 $session = SessionService::getInstance();
 
+// Para ver la web hay que haber iniciado sesión: si no, se va al login.
+// Debe ir antes de cualquier HTML, y exit corta la ejecución
+if (!$session->isLoggedIn()) {
+    header('Location: login.php');
+    exit;
+}
+
 // ---------- LÓGICA: leer los productos ----------
 // Texto del buscador. Viene por la URL (?search=...) porque el formulario usa GET.
 // "?? ''" evita un error si todavía no se ha buscado nada. trim() quita espacios sobrantes

@@ -10,6 +10,13 @@ use services\SessionService;
 // La sesión debe obtenerse antes de escribir nada de HTML (header.php la necesita)
 $session = SessionService::getInstance();
 
+// Para ver la web hay que haber iniciado sesión: si no, se va al login.
+// Debe ir antes de cualquier HTML, y exit corta la ejecución
+if (!$session->isLoggedIn()) {
+    header('Location: login.php');
+    exit;
+}
+
 // ---------- RECIBIR Y VALIDAR EL ID ----------
 // El id llega por la URL (details.php?id=3), así que se lee de $_GET.
 // "?? ''" evita un error si no llega. filter_var devuelve el número entero,
